@@ -1,0 +1,12 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sMaxReplicas # Sử dụng chính xác cái loại (kind) đã định nghĩa ở Template trên
+metadata:
+  name: limit-deployment-replicas
+spec:
+  enforcementAction: deny # Chặn đứng ngay lập tức nếu vi phạm
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment"] # Chỉ áp dụng luật này lên tài nguyên Deployment
+  parameters:
+    maxReplicas: 5

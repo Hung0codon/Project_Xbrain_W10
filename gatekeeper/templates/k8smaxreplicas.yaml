@@ -1,0 +1,33 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8smaxreplicas
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sMaxReplicas
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            maxReplicas:
+              type: integer # Tham số truyền vào từ Constraint, ở đây là số 5
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8smaxreplicas
+
+        violation[{"msg": msg}] {
+          # 1. Tìm thuộc tính replicas trong file Deployment gửi lên
+          replicas := input.review.object.spec.replicas
+          
+          # 2. Lấy số lượng tối đa được phép từ tham số cấu hình (Constraint)
+          max_allowed := input.parameters.maxReplicas
+          
+          # 3. So sánh: Nếu số replicas gửi lên LỚN HƠN số cho phép -> Báo vi phạm!
+          replicas > max_allowed
+          
+          # 4. Trả về câu thông báo lỗi cho người dùng
+          msg := sprintf("Số lượng bản sao (%v) vượt quá mức tối đa cho phép (%v) của hệ thống!", [replicas, max_allowed])
+        }
