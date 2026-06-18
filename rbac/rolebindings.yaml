@@ -1,0 +1,40 @@
+# Gắn User alice vào Role developer-role trong namespace demo
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alice-developer-binding
+  namespace: demo
+subjects:
+- kind: User
+  name: alice
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer-role
+  apiGroup: rbac.authorization.k8s.io
+# Gắn User bob vào ClusterRole sre-cluster-role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: bob-sre-binding
+subjects:
+- kind: User
+  name: bob
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: sre-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+# Gắn User carl vào ClusterRole viewer-cluster-role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: carl-viewer-binding
+subjects:
+- kind: User
+  name: carl
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: viewer-cluster-role
+  apiGroup: rbac.authorization.k8s.io

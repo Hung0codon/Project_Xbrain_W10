@@ -1,0 +1,29 @@
+# Quyen developer cho alice : chi chay trong namespace demo
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer-role
+  namespace: demo
+rules:
+- apiGroups: ["","apps"]
+  resources: ["pods", "deployments","services"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# 2. Quyền SRE cho Bob: Có tác dụng Toàn Cụm (ClusterRole) nhưng chỉ giới hạn với PodsapiVersion: rbac.authorization.k8s.io/v1
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sre-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log","pods/exec"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# 3. Quyền Viewer cho Carol: Xem được mọi tài nguyên trên toàn cụm nhưng không được sửa/xóa
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: viewer-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+
