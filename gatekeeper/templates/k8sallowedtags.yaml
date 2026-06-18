@@ -22,6 +22,6 @@ spec:
         violation[{"msg": msg}] {
           container := input.review.object.spec.containers[_]
           some i
-          input.parameters.tags[i] == endswith(container.image, concat("", [":", input.parameters.tags[i]]))
+          endswith(container.image, concat("", [":", input.parameters.tags[i]]))
           msg := sprintf("Image tag :%v không được phép sử dụng", [input.parameters.tags[i]])
         }

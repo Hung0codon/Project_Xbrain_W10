@@ -14,6 +14,10 @@ spec:
         violation[{"msg": msg}] {
           container := input.review.object.spec.containers[_]
           not container.resources.limits.cpu
+          msg := sprintf("Container %v bắt buộc phải cấu hình tài nguyên cpu limit", [container.name])
+        }
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
           not container.resources.limits.memory
-          msg := sprintf("Container %v bắt buộc phải cấu hình tài nguyên limits", [container.name])
+          msg := sprintf("Container %v bắt buộc phải cấu hình tài nguyên memory limit", [container.name])
         }
