@@ -9,7 +9,4 @@ spec:
       - apiGroups: [""]
         kinds: ["Pod"]
     namespaces:
-      - demo
-  parameters:
-    cpu: "true"
-    memory: "true"
+      - demo
