@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-eso-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Chạy ở Làn sóng số 1 để tránh lỗi hụt CRD
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Hung0codon/Project_Xbrain_W10.git'
+    targetRevision: main
+    path: eso
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
