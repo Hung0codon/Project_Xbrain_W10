@@ -31,10 +31,10 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: carl-viewer-binding
+  name: carol-viewer-binding
 subjects:
 - kind: User
-  name: carl
+  name: carol
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole

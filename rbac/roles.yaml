@@ -25,6 +25,6 @@ kind: ClusterRole
 metadata:
   name: viewer-cluster-role
 rules:
-- apiGroups: [""]
+- apiGroups: ["*"]
   resources: ["*"]
   verbs: ["get", "list", "watch"]
