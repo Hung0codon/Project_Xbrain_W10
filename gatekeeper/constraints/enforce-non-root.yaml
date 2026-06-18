@@ -1,0 +1,10 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sCompulsoryNonRoot
+metadata:
+  name: enforce-non-root
+spec:
+  enforcementAction: deny # Từ chối thẳng nếu vi phạm
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]

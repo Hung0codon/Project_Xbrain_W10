@@ -1,0 +1,13 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLimits
+metadata:
+  name: require-cpu-memory-limits
+spec:
+  enforcementAction: deny # Từ chối thẳng nếu vi phạm
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+  parameters:
+    cpu: "true"
+    memory: "true"
