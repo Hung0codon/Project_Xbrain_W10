@@ -31,6 +31,10 @@ spec:
           value: "v0.0.1"
         - name: ERROR_RATE
           value: "0"
+        volumeMounts:
+        - name: secret-volume
+          mountPath: /etc/secrets
+          readOnly: true
         livenessProbe:
           httpGet:
             path: /healthz
@@ -45,6 +49,10 @@ spec:
           limits:
             cpu: 200m
             memory: 128Mi
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: db-secret-local
   strategy:
     canary:
       analysis:
