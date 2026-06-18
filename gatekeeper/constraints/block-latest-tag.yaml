@@ -8,5 +8,7 @@ spec:
     kinds:
       - apiGroups: [""]
         kinds: ["Pod"]
+    namespaces:
+      - demo
   parameters:
     tags: ["latest"]

@@ -7,6 +7,8 @@ spec:
   match:
     kinds:
       - apiGroups: ["apps"]
-        kinds: ["Deployment"] # Chỉ áp dụng luật này lên tài nguyên Deployment
+        kinds: ["Deployment"]
+    namespaces:
+      - demo # Chỉ áp dụng luật này lên tài nguyên Deployment
   parameters:
     maxReplicas: 5
