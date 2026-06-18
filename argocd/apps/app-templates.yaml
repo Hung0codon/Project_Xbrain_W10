@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-gatekeeper-templates
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Tạo các Khung CRD trước
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Hung0codon/Project_Xbrain_W10.git'
+    targetRevision: HEAD
+    path: gatekeeper/templates
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: gatekeeper-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
