@@ -1,6 +1,33 @@
 # HƯỚNG DẪN NGHIỆM THU (TEST GUIDE) - LAB 2.1
 > **Hướng dẫn từng bước thực hiện nghiệm thu quy trình xoay vòng mật khẩu (Rotate Secret) tự động không gây gián đoạn (Zero-Downtime) và bảo mật mã nguồn.**
 
+---
+
+## 🗺️ Sơ đồ Luồng hoạt động Xoay vòng Secret (ESO Flow)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as DevSecOps Admin
+    participant AWS as AWS Secrets Manager
+    participant ESO as External Secrets Operator
+    participant K8sSecret as K8s Secret (db-secret-local)
+    participant Kubelet as Kubernetes Kubelet
+    participant Pod as Flask API Container
+
+    Admin->>AWS: Cập nhật mật khẩu mới (db_password)
+    loop Quá trình thăm dò tự động (Refresh Interval < 60s)
+        ESO->>AWS: Kiểm tra và kéo mật khẩu mới bằng Access Key
+        AWS-->>ESO: Trả về mật khẩu mới
+    end
+    ESO->>K8sSecret: Tự động cập nhật data mật khẩu mới (base64)
+    Kubelet->>K8sSecret: Phát hiện thay đổi trong Secret resource
+    Kubelet->>Pod: Tự động cập nhật file mount tại /etc/secrets/local_db_password
+    Note over Pod: Đọc mật khẩu mới trực tiếp từ file mount<br/>(Không cần khởi động lại Pod - Zero Downtime)
+```
+
+---
+
 Báo cáo kiểm thử này được thiết kế để đáp ứng chính xác 3 tiêu chí nghiệm thu của đề bài:
 1. **Đổi giá trị trên AWS** ➡️ K8s Secret tự động cập nhật trong vòng **< 60 giây**.
 2. **Kiểm tra Pod** ➡️ Trạng thái hoạt động liên tục, số lần restart **không thay đổi (No Restart)**.
