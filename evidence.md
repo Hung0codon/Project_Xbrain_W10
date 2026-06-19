@@ -292,15 +292,6 @@
   ```
 * Kết quả thực tế: Pod chạy ở trạng thái `Running` bình thường.
 
+
 📸 **[ẢNH 18: Terminal chạy Pod API có chữ ký số thành công]**
 *(Chèn ảnh của bạn tại đây)*
-
----
-
-## 🏆 CHALLENGE: THIẾT KẾ MULTI-TENANT (AN TOÀN CHO ĐOÀN ĐỘI/TENANTS)
-Để chuẩn bị chào đón đội ngũ Payments cùng triển khai trên cụm K8s, dự án đề xuất giải pháp thiết kế cô lập tài nguyên và mạng (Multi-tenant):
-
-1. **Cô lập Namespace**: Tạo namespace riêng biệt cho Payments (`payments`).
-2. **Thiết lập NetworkPolicies**: Chỉ cho phép Flask API của `demo` giao tiếp với cơ sở dữ liệu và chặn toàn bộ các luồng truy cập mạng trái phép từ namespace `payments`.
-3. **Giới hạn tài nguyên (ResourceQuota)**: Thiết lập hạn ngạch tài nguyên CPU/Memory tối đa cho namespace `payments` để tránh việc họ chiếm dụng hết phần cứng của Node, ảnh hưởng đến ứng dụng `demo` hiện tại.
-4. **Phân quyền RBAC độc lập**: Tạo Role/RoleBinding giới hạn đội ngũ Payments chỉ được CRUD tài nguyên trong namespace `payments`, tuyệt đối không thể can thiệp vào namespace `demo`.
