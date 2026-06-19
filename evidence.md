@@ -35,8 +35,7 @@
   ```
   *Kết quả thực tế*: `no`
 
-📸 **[ẢNH 2: Terminal check quyền Alice]**
-*(Chèn ảnh kết quả chạy 2 lệnh trên)*
+![Terminal check quyền Alice](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/alice_rbac_check.png)
 
 
 ### 3. Xác thực phân quyền User Bob (SRE - Quản trị Pod toàn cụm)
@@ -52,8 +51,7 @@
   ```
   *Kết quả thực tế*: `no`
 
-📸 **[ẢNH 3: Terminal check quyền Bob]**
-*(Chèn ảnh kết quả chạy 2 lệnh trên)*
+![Terminal check quyền Bob](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/bob_rbac_check.png)
 
 
 ### 4. Xác thực phân quyền User Carol (Viewer - Chỉ đọc toàn cụm)
@@ -69,8 +67,7 @@
   ```
   *Kết quả thực tế*: `no`
 
-📸 **[ẢNH 4: Terminal check quyền Carol]**
-*(Chèn ảnh kết quả chạy 2 lệnh trên)*
+![Terminal check quyền Carol](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/carol_rbac_check.png)
 
 ---
 
@@ -92,8 +89,7 @@
 * Kết quả thực tế bị API Server từ chối:
   `Error from server (Forbidden): admission webhook "validation.gatekeeper.sh" denied the request...`
 
-📸 **[ẢNH 6: Terminal chặn tag latest]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal chặn tag latest](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/gatekeeper_latest_block.png)
 
 
 ### 3. Kiểm chứng Luật 2: Bắt buộc khai báo resources limit
@@ -103,8 +99,7 @@
   ```
 * Kết quả thực tế bị API Server từ chối.
 
-📸 **[ẢNH 7: Terminal chặn Pod thiếu resource limits]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal chặn Pod thiếu resource limits](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/gatekeeper_limits_block.png)
 
 
 ### 4. Kiểm chứng Luật 3: Cấm chạy bằng quyền root (`runAsUser: 0`)
@@ -126,8 +121,7 @@
   ```
 * Kết quả thực tế bị API Server chặn đứng.
 
-📸 **[ẢNH 8: Terminal chặn Pod chạy quyền root]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal chặn Pod chạy quyền root](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/gatekeeper_root_block.png)
 
 
 ### 5. Kiểm chứng Luật 4: Cấm cấu hình mạng Host (`hostNetwork: true`)
@@ -148,8 +142,7 @@
   ```
 * Kết quả thực tế bị API Server từ chối.
 
-📸 **[ẢNH 9: Terminal chặn Pod hostNetwork]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal chặn Pod hostNetwork](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/gatekeeper_hostnet_block.png)
 
 ---
 
@@ -186,8 +179,7 @@
 * Kết quả thực tế bị API Server từ chối:
   `...Số lượng bản sao (6) vượt quá mức tối đa cho phép (5) của hệ thống!...`
 
-📸 **[ẢNH 10: Terminal chặn Deployment có replicas > 5]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal chặn Deployment có replicas > 5](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/gatekeeper_replicas_block.png)
 
 
 ### 2. Thử tạo Deployment hợp lệ (Replicas = 3)
@@ -220,8 +212,7 @@
   ```
 * Kết quả thực tế: Tạo thành công.
 
-📸 **[ẢNH 11: Terminal tạo Deployment 3 replicas thành công]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal tạo Deployment 3 replicas thành công](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/gatekeeper_replicas_allow.png)
 
 ---
 
@@ -253,8 +244,7 @@
   * Mật khẩu được đồng bộ về cụm thành công dưới 35 giây.
   * Cột `RESTARTS` của Pod Flask API giữ nguyên (không tăng lên), chứng minh Zero-Downtime Secret Rotation hoạt động hoàn hảo.
 
-📸 **[ẢNH 14: Terminal cập nhật mật khẩu mới & Pod API không bị restart]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal cập nhật mật khẩu mới & Pod API không bị restart](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/eso_rotation_check.png)
 
 ---
 
@@ -281,8 +271,7 @@
 * Kết quả thực tế bị từ chối ngay lập tức:
   `Error from server (BadRequest): admission webhook "policy.sigstore.dev" denied the request...`
 
-📸 **[ẢNH 17: Terminal chặn image chưa ký số]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal chặn image chưa ký số](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/cosign_unsigned_block.png)
 
 
 ### 4. Kiểm chứng Webhook cho phép Image có chữ ký số hợp lệ (Signed Image)
@@ -293,5 +282,4 @@
 * Kết quả thực tế: Pod chạy ở trạng thái `Running` bình thường.
 
 
-📸 **[ẢNH 18: Terminal chạy Pod API có chữ ký số thành công]**
-*(Chèn ảnh của bạn tại đây)*
+![Terminal chạy Pod API có chữ ký số thành công](file:///C:/Users/ADMIN/.gemini/antigravity/brain/1cb95842-f87c-4e48-ba5c-5badc2a0e46b/cosign_signed_allow.png)
