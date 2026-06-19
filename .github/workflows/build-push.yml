@@ -1,42 +1,45 @@
-# Build and push Docker image to GitHub Container Registry
+# Pipeline tự động Build và Push Docker image lên GitHub Container Registry (GHCR)
 name: Build and Push Image
 
 on:
   push:
     branches:
-      - main
+      - main # Chạy khi có code mới push lên nhánh main
     paths:
-      - 'src/api/**'
-      - '.github/workflows/build-push.yml'
-  workflow_dispatch:
+      - 'src/api/**' # Chỉ chạy khi có thay đổi trong thư mục src/api (mã nguồn ứng dụng)
+      - '.github/workflows/build-push.yml' # Hoặc khi chỉnh sửa chính file cấu hình pipeline này
+  workflow_dispatch: # Cho phép kích hoạt pipeline thủ công từ giao diện GitHub
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/w10-api
+  REGISTRY: ghcr.io # Sử dụng GitHub Container Registry
+  IMAGE_NAME: ${{ github.repository_owner }}/w10-api # Đặt tên image dạng: <tên-user-github>/w10-api
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Chạy trên môi trường Ubuntu sạch của GitHub
     permissions:
-      contents: write
-      packages: write
+      contents: write # Quyền ghi vào repo (dùng để commit bump version và push git tag)
+      packages: write # Quyền ghi vào GitHub Packages (để push Docker Image)
 
     steps:
+      # Bước 1: Clone mã nguồn của repository về máy ảo CI
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Lấy toàn bộ lịch sử commit để tính toán phiên bản chuẩn xác
 
+      # Bước 2: Tự động tính toán phiên bản (Semantic Versioning) dựa trên Git Commit Message
       - name: Calculate semantic version
         id: semver
         uses: paulhatch/semantic-version@v5.4.0
         with:
           tag_prefix: "v"
-          major_pattern: "(BREAKING CHANGE:|!:)"
-          minor_pattern: "^feat"
+          major_pattern: "(BREAKING CHANGE:|!:)" # Commit dạng này sẽ tăng phiên bản Major (X.0.0)
+          minor_pattern: "^feat"                  # Commit bắt đầu bằng "feat" sẽ tăng phiên bản Minor (0.Y.0)
           version_format: "${major}.${minor}.${patch}"
-          bump_each_commit: false
+          bump_each_commit: false # Chỉ tăng phiên bản khi có commit thay đổi hợp lệ
 
+      # Bước 3: Đăng nhập vào GitHub Container Registry (GHCR) sử dụng token có sẵn của GitHub Actions
       - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
@@ -44,6 +47,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Bước 4: Trích xuất metadata và tạo các tag cho Docker Image (latest, tag phiên bản, tag SHA)
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
@@ -54,31 +58,35 @@ jobs:
             type=raw,value=${{ steps.semver.outputs.version }}
             type=sha,prefix=v${{ steps.semver.outputs.version }}-
 
+      # Bước 5: Thực hiện Build Dockerfile và Push Image lên GitHub Container Registry
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./src/api
-          push: true
+          context: ./src/api # Đường dẫn chứa Dockerfile và source code
+          push: true # Tự động đẩy lên Registry sau khi build thành công
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      # Bước 6: Cập nhật file cấu hình Rollout (GitOps) để trỏ đến tag Image phiên bản mới vừa build
       - name: Update rollout.yaml with new version
         run: |
           sed -i "s|image: ghcr.io/.*/w10-api:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.semver.outputs.version }}|g" app-api/rollout.yaml
           sed -i "s|value: \"v.*\"|value: \"v${{ steps.semver.outputs.version }}\"|g" app-api/rollout.yaml
 
+      # Bước 7: Commit sự thay đổi của file rollout.yaml ngược trở lại Git repository
       - name: Commit and push version update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add app-api/rollout.yaml
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No changes to commit" # Tránh lỗi pipeline khi không có thay đổi
           else
             git commit -m "chore: bump version to v${{ steps.semver.outputs.version }}"
             git push
           fi
 
+      # Bước 8: Tạo Git Tag phiên bản mới và push lên GitHub để quản lý release
       - name: Create git tag
         run: |
           git tag v${{ steps.semver.outputs.version }}
