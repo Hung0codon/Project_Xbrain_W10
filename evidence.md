@@ -1,14 +1,6 @@
 # BÁO CÁO MINH CHỨNG (EVIDENCE) HOÀN THÀNH TOÀN BỘ LAB W10
 > **Dự án: Triển khai An toàn bảo mật Hệ thống GitOps K8s (RBAC, OPA Gatekeeper, External Secrets Operator, Trivy & Cosign, Canary Rollouts).**
-> **Họ và tên học viên**: [Điền tên của bạn]
-> **Link Repo GitHub**: [Điền link repository GitHub của bạn]
-
----
-
-## 🧭 HƯỚNG DẪN CHUNG CHO NGƯỜI CHẤM BÀI
-* Toàn bộ tài nguyên, chính sách bảo mật, và phân quyền đều được khai báo dưới dạng **GitOps** và đồng bộ tự động qua **ArgoCD**.
-* Trạng thái đồng bộ trên ArgoCD hiện tại đều đạt: **Synced** và **Healthy**.
-* Các minh chứng dưới đây ghi nhận chi tiết kết quả chạy thực tế dưới cụm Local Minikube.
+> **Họ và tên học viên**: [Lê Viết Quốc Hưng]
 
 ---
 
@@ -19,7 +11,7 @@
 > *Chụp ảnh màn hình ArgoCD Dashboard hiển thị ứng dụng `app-rbac` ở trạng thái Synced và Healthy.*
 
 📸 **[ẢNH 1: ArgoCD App app-rbac Synced/Healthy]**
-*(Chèn ảnh của bạn tại đây)*
+<img width="1172" height="731" alt="image" src="https://github.com/user-attachments/assets/99f6e446-6008-41f8-a42e-4af9fe444d5b" />
 
 
 ### 2. Xác thực phân quyền User Alice (Developer - CRUD workload trong namespace demo)
@@ -74,11 +66,10 @@
 ## 🟩 LAB 1.2: OPA GATEKEEPER (4 LUẬT BẢO MẬT HẠ TẦNG)
 
 ### 1. Trạng thái đồng bộ của Gatekeeper trên ArgoCD
-> [!NOTE]
-> *Chụp ảnh màn hình ArgoCD hiển thị cả 3 ứng dụng: `app-gatekeeper`, `app-gatekeeper-templates`, và `app-gatekeeper-constraints` đều xanh (Synced/Healthy).*
 
 📸 **[ẢNH 5: ArgoCD Gatekeeper Apps Synced/Healthy]**
-*(Chèn ảnh của bạn tại đây)*
+<img width="1595" height="566" alt="image" src="https://github.com/user-attachments/assets/d45a5d63-088e-48d6-924e-8ad71601ae75" />
+
 
 
 ### 2. Kiểm chứng Luật 1: Cấm tag `:latest`
@@ -219,16 +210,14 @@
 ## 🟩 LAB 2.1: XOAY VÒNG BẢO MẬT SECRET (ESO + AWS SECRETS MANAGER)
 
 ### 1. Cấu hình Secret trên AWS Secrets Manager
-> [!NOTE]
-> *Chụp ảnh màn hình giao diện Console AWS Secrets Manager hiển thị Secret `prod/db/credentials` đã được tạo.*
 
 📸 **[ẢNH 12: AWS Secrets Manager Console]**
-*(Chèn ảnh của bạn tại đây)*
+<img width="940" height="429" alt="image" src="https://github.com/user-attachments/assets/b512d3d7-50b0-4fdc-9ae8-1d2427ad8b76" />
 
 
-### 2. Trạng thái đồng bộ ứng dụng `app-eso` và `app-eso-config` trên ArgoCD
+### 2. Trạng thái đồng bộ ứng dụng `app-eso-config` trên ArgoCD
 📸 **[ẢNH 13: ArgoCD ESO Apps Synced/Healthy]**
-*(Chèn ảnh của bạn tại đây)*
+<img width="1323" height="627" alt="image" src="https://github.com/user-attachments/assets/0f0358e4-b0ae-4fda-917a-5a566d4b2f8d" />
 
 
 ### 3. Kiểm chứng xoay vòng mật khẩu < 60 giây và Pod hoạt động liên tục (No Restart)
@@ -251,16 +240,15 @@
 ## 🟩 LAB 2.2: BẢO MẬT CHUỖI CUNG ỨNG (TRIVY + COSIGN)
 
 ### 1. Quy trình CI chạy thành công (Trivy Scan & Cosign Sign)
-> [!NOTE]
-> *Chụp ảnh màn hình lịch sử chạy GitHub Actions thành công ở các bước quét Trivy và ký số Cosign.*
+
 
 📸 **[ẢNH 15: GitHub Actions Pipeline chạy thành công]**
-*(Chèn ảnh của bạn tại đây)*
+<img width="855" height="854" alt="image" src="https://github.com/user-attachments/assets/f50495a0-54b0-4d64-85c5-f20247f03ebf" />
 
 
 ### 2. Trạng thái đồng bộ `policy-controller` và các chính sách bảo mật `policies` trên ArgoCD
 📸 **[ẢNH 16: ArgoCD Policy Apps Synced/Healthy]**
-*(Chèn ảnh của bạn tại đây)*
+<img width="590" height="605" alt="image" src="https://github.com/user-attachments/assets/bb56fe67-59c3-4619-9c76-3624d50089b6" />
 
 
 ### 3. Kiểm chứng Webhook từ chối Image chưa ký số (Unsigned Image)
