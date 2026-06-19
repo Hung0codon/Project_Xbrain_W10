@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io # Sử dụng GitHub Container Registry
-  IMAGE_NAME: ${{ github.repository_owner }}/w10-api # Đặt tên image dạng: <tên-user-github>/w10-api
+  IMAGE_NAME: hung0codon/w10-api # Đặt tên image ở dạng viết thường (lowercase) để tương thích với Trivy và Docker Registry
 
 jobs:
   build-and-push:
