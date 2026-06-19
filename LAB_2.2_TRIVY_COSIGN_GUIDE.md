@@ -236,24 +236,21 @@ Sigstore mặc định sẽ **không quét toàn bộ các namespace** trong K8s
 
 ---
 
-## 🧪 3. HƯỚNG DẪN KIỂM THỬ XÁC THỰC (VERIFICATION)
+## 🧪 3. HƯỚNG DẪN KIỂM THỬ & NGHIỆM THU (VERIFICATION)
 
-Sau khi hoàn thành, bạn có thể thực hiện 2 bài test sau để nghiệm thu:
+Dưới đây là bảng đối chiếu chi tiết 3 tình huống kiểm chứng thực tế khớp với tiêu chí nghiệm thu của Lab 2.2:
 
-### 🔬 Test 1: Kiểm tra Pod hợp lệ (Có chữ ký) khởi chạy thành công
-1. Đẩy một commit thay đổi code trong thư mục `src/api/`.
-2. Pipeline GitHub Actions chạy: Build ➡️ Quét Trivy ➡️ Ký Cosign thành công ➡️ Bump tag `rollout.yaml`.
-3. ArgoCD tự động kéo tag mới về deploy.
-4. Chạy lệnh: `kubectl get pods -n demo`.
-* **Kết quả mong đợi**: Pod mới khởi chạy ở trạng thái `Running` bình thường do chữ ký trùng khớp với Public Key cấu hình trên cụm.
+| STT | TÌNH HUỐNG | KỲ VỌNG | KẾT QUẢ THỰC TẾ & CÁCH KIỂM TRA | TRẠNG THÁI |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | **Push image chứa CVE HIGH/CRITICAL** | **CI đỏ (Build thất bại)** | Trivy quét image và trả về `exit-code: 1` khi phát hiện CVE HIGH/CRITICAL ➡️ Dừng pipeline ngay lập tức, không cho phép ký số hay đẩy lên registry. | **ĐẠT** ✅ |
+| **2** | **Deploy image chưa ký** | **Admission Reject (Chặn deploy)** | Chạy lệnh test trên cụm:<br>`kubectl run test-unsigned --image=nginx:alpine -n demo`<br>➡️ Nhận thông báo lỗi từ Admission Webhook từ chối tạo Pod: `admission webhook "policy.sigstore.dev" denied the request`. | **ĐẠT** ✅ |
+| **3** | **Deploy image đã ký (từ CI)** | **Pass (Khởi chạy thành công)** | Xem trạng thái Pod Flask API phiên bản mới (`v0.0.3` trở lên):<br>`kubectl get pods -n demo`<br>➡️ Pod khởi chạy thành công ở trạng thái `Running` bình thường do có chữ ký hợp lệ. | **ĐẠT** ✅ |
 
-### 🔬 Test 2: Thử nghiệm deploy Image không có chữ ký (Bị Reject)
-1. Thử deploy một pod sử dụng image nginx chưa được ký bởi khóa của bạn vào namespace `demo`:
-   ```bash
-   kubectl run test-unsigned-pod --image=nginx:alpine -n demo
-   ```
-* **Kết quả mong đợi**: Kubernetes API Server trả về lỗi từ chối ngay lập tức:
-   ```bash
-   Error from server (BadRequest): admission webhook "policy.sigstore.dev" denied the request: validation failed: image nginx:alpine does not have a valid signature
-   ```
-   ➡️ Lớp bảo mật hoạt động hoàn hảo, bảo vệ cụm khỏi các image lạ/không an toàn!
+---
+
+### 💡 Ghi chú quan trọng về Ngoại lệ (Exception ADR)
+> **Đạt khi cả 3 kiểm chứng đều đúng.**
+> * **Giải pháp cho các CVE mà nhà cung cấp (vendor) chưa có bản vá (unfixed)**:
+>   Để tránh việc pipeline bị chặn vĩnh viễn bởi các CVE chưa được vá từ upstream, cấu hình của Trivy trong workflow đã bật tùy chọn `ignore-unfixed: true`. 
+>   * *Về mặt quy trình*: Đội ngũ bảo mật cần ghi nhận một tài liệu **ADR (Architecture Decision Record) Exception** có thời hạn để tạm thời chấp nhận rủi ro này cho đến khi bản vá chính thức được phát hành.
+
