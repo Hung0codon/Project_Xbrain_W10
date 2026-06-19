@@ -248,6 +248,7 @@
 
 ### 2. Trạng thái đồng bộ `policy-controller` và các chính sách bảo mật `policies` trên ArgoCD
 📸 **[ẢNH 16: ArgoCD Policy Apps Synced/Healthy]**
+
 <img width="590" height="605" alt="image" src="https://github.com/user-attachments/assets/bb56fe67-59c3-4619-9c76-3624d50089b6" />
 
 
