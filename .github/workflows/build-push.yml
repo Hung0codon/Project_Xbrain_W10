@@ -67,6 +67,32 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      # 1. Quét lỗ hổng bảo mật bằng Trivy
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.semver.outputs.version }}'
+          format: 'table'
+          exit-code: '1' # Chặn pipeline và báo lỗi nếu phát hiện CVE High/Critical
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }} # Dùng để xác thực đọc image private trên GHCR
+
+      # 2. Cài đặt môi trường Cosign
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+      # 3. Ký tên lên Docker Image
+      - name: Sign the published Docker image
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.semver.outputs.version }}"
+
       # Bước 6: Cập nhật file cấu hình Rollout (GitOps) để trỏ đến tag Image phiên bản mới vừa build
       - name: Update rollout.yaml with new version
         run: |
