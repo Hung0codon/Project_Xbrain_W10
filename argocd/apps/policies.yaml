@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-img-policies
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Áp dụng luật sau khi controller đã sẵn sàng
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Hung0codon/Project_Xbrain_W10.git'
+    targetRevision: HEAD
+    path: policies
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: cosign-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
