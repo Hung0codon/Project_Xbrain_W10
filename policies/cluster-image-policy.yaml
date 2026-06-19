@@ -1,0 +1,14 @@
+apiVersion: policy.sigstore.dev/v1alpha1
+kind: ClusterImagePolicy
+metadata:
+  name: image-signature-policy
+spec:
+  images:
+    - glob: "ghcr.io/hung0codon/*" # Chỉ quét và xác thực đối với các image của tài khoản của bạn
+  authorities:
+    - key:
+        data: |
+          -----BEGIN PUBLIC KEY-----
+          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEk/BAyGGecagdjSgJc5y2QngfadSl
+          aXsy0wNT1WDUTWtnQbNmFkbW0fIWDUxoVXnGJWuetRPJX8f2pkkeY731dQ==
+          -----END PUBLIC KEY-----
