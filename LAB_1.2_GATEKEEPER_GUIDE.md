@@ -31,7 +31,66 @@ flowchart TD
     Validating -- "Thỏa mãn tất cả luật" -->|Ghi vào etcd| Allowed["✅ ALLOW <br> (Khởi tạo tài nguyên trên cụm)"]
 ```
 
+### ⚙️ 2.1. CƠ CHẾ HOẠT ĐỘNG DƯỚI GÓC ĐỘ MÃ NGUỒN (UNDER THE HOOD)
+
+Khi có một sự kiện tạo/cập nhật tài nguyên trên Kubernetes (ví dụ: chạy lệnh `kubectl apply`):
+
+1. **Serialization**: API Server chuyển đổi file YAML của người dùng thành đối tượng JSON và gói vào một payload có cấu trúc tên là `AdmissionReview`.
+2. **Webhook Request**: API Server gửi payload này qua giao thức HTTPS POST tới Endpoint của OPA Gatekeeper.
+3. **Rego Evaluation**: OPA Engine tự động nạp JSON này vào biến môi trường toàn cục `input` trong Rego:
+   * Bản thân đặc tả cấu hình của Pod/Deployment sẽ nằm tại đường dẫn: `input.review.object`.
+4. **Xử lý logic**: Gatekeeper chạy qua toàn bộ các luật Rego đã biên dịch trong các `ConstraintTemplate`:
+   * Nếu điều kiện trong mệnh đề `violation[...]` được thỏa mãn (tức là phát hiện vi phạm chính sách), Gatekeeper sẽ tự động thu thập thông điệp lỗi `msg`.
+5. **Webhook Response**: Gatekeeper trả về JSON `AdmissionResponse` cho API Server:
+   * Nếu có vi phạm: `allowed: false` kèm theo chuỗi `msg` cảnh báo.
+   * Nếu sạch lỗi: `allowed: true`, cho phép API Server tiếp tục ghi tài nguyên vào database `etcd`.
+
 ---
+
+### 🔍 2.2. PHÂN TÍCH LUỒNG CODE LOGIC CỦA 4 LUẬT CƠ BẢN
+
+#### 1. Luật cấm tag `:latest` (`k8sallowedtags.yaml`)
+* **Đoạn Code Rego**:
+  ```rego
+  container := input.review.object.spec.containers[_]
+  endswith(container.image, ":latest")
+  ```
+* **Cách hoạt động**: 
+  * Cú pháp `spec.containers[_]` duyệt qua tất cả các container khai báo trong Pod (kể cả InitContainers).
+  * Hàm `endswith(..., ":latest")` kiểm tra xem đường dẫn ảnh của container có kết thúc bằng chuỗi `:latest` hay không. Nếu có, luật này được kích hoạt và chặn Deployment lại.
+
+#### 2. Luật bắt buộc khai báo CPU/Memory limits (`k8srequiredlimits.yaml`)
+* **Đoạn Code Rego**:
+  ```rego
+  container := input.review.object.spec.containers[_]
+  not container.resources.limits.cpu
+  ```
+  *(Tương tự đối với `limits.memory`)*
+* **Cách hoạt động**:
+  * Từ khóa `not` trong Rego dùng để kiểm tra sự **vắng mặt** của một thuộc tính.
+  * Nếu container không định nghĩa trường `resources.limits.cpu` hoặc `resources.limits.memory`, biểu thức `not` sẽ trả về `true` ➡️ Vi phạm chính sách ➡️ Chặn deploy.
+
+#### 3. Luật cấm chạy bằng quyền Root (`k8scompulsorynonroot.yaml`)
+* **Đoạn Code Rego**:
+  ```rego
+  container := input.review.object.spec.containers[_]
+  container.securityContext.runAsUser == 0
+  ```
+* **Cách hoạt động**:
+  * Duyệt vào sâu thuộc tính bảo mật của container `securityContext`.
+  * So sánh giá trị `runAsUser` với số `0` (User ID của root). Nếu bằng `0`, pod sẽ bị từ chối khởi chạy.
+
+#### 4. Luật cấm bật HostNetwork (`k8shostnetwork.yaml`)
+* **Đoạn Code Rego**:
+  ```rego
+  input.review.object.spec.hostNetwork == true
+  ```
+* **Cách hoạt động**:
+  * Khác với các luật trên duyệt sâu vào từng container, luật này kiểm tra trực tiếp cấu hình mạng ở cấp độ Pod (`spec.hostNetwork`).
+  * Nếu được đặt thành `true`, toàn bộ Pod sẽ bị Admission Controller reject lập tức.
+
+---
+
 
 ## 📂 3. CÁC LUẬT BẢO MẬT ĐÃ CẤU HÌNH (CONSTRAINTS)
 
