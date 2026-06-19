@@ -1,5 +1,5 @@
 # BÁO CÁO TOÀN DIỆN TIẾN TRÌNH TRIỂN KHAI DỰ ÁN W10
-> **Tài liệu hướng dẫn và báo cáo chi tiết từ A-Z toàn bộ các phần việc đã thực hiện: RBAC, OPA Gatekeeper, External Secrets Operator (ESO) và ứng dụng Argo Rollout.**
+> **Tài liệu hướng dẫn và báo cáo chi tiết từ A-Z toàn bộ các phần việc đã thực hiện: RBAC, OPA Gatekeeper, External Secrets Operator (ESO), Ứng dụng Argo Rollout, Trivy Vulnerability Scanning và Cosign Image Signature Verification.**
 
 ---
 
@@ -7,6 +7,14 @@
 
 ```mermaid
 graph TD
+    subgraph GitHub_Platform ["GitHub & Actions CI/CD"]
+        Developer["Lập trình viên <br> (Push Code)"]
+        CI["GitHub Actions Workflow"]
+        Trivy["Trivy Scanner <br> (Quét bảo mật High/Critical)"]
+        CosignSign["Cosign Signer <br> (Ký số bằng Private Key)"]
+        GHCR["GitHub Container Registry <br> (ghcr.io/hung0codon/w10-api)"]
+    end
+
     subgraph AWS Cloud ["AWS Cloud"]
         ASM["AWS Secrets Manager <br> (prod/db/credentials)"]
     end
@@ -26,13 +34,18 @@ graph TD
             GK["OPA Gatekeeper <br> (Chỉ kiểm duyệt Namespace: demo)"]
         end
 
-        subgraph Namespace: demo ["Namespace: demo"]
+        subgraph Namespace: cosign-system ["Namespace: cosign-system"]
+            Sigstore["Sigstore Policy Controller <br> (Admission Webhook)"]
+            CIP["ClusterImagePolicy <br> (Nạp Public Key)"]
+        end
+
+        subgraph Namespace: demo ["Namespace: demo (Labeled policy.sigstore.dev/include=true)"]
             direction TB
             SecretCreds["K8s Secret: aws-secret-creds <br> (Access Keys - Local Only)"]
             Store["SecretStore"]
             ExtSecret["ExternalSecret"]
             LocalSecret["K8s Secret: db-secret-local <br> (Tự động kéo từ AWS)"]
-            Pod["Flask API Pod <br> (Mounts db-secret-local)"]
+            Pod["Flask API Pod <br> (Chỉ cho phép chạy Image đã ký số)"]
             
             %% Phân quyền RBAC
             Alice["User: Alice <br> (Role: developer-role)"]
@@ -41,14 +54,24 @@ graph TD
         end
     end
 
-    %% Mối liên kết
+    %% Mối liên kết CI/CD
+    Developer -->|Push code & Bumping version| CI
+    CI -->|Tải mã nguồn & Quét lỗi| Trivy
+    Trivy -->|Nếu PASS| CosignSign
+    CosignSign -->|Đẩy ảnh đã ký| GHCR
+    CI -->|Tự động cập nhật rollout.yaml| ArgoCD
+
+    %% Mối liên kết Cluster
     SecretCreds -->|Cung cấp API Keys| Store
     Store -->|Xác thực kết nối| ASM
     ExtSecret -->|Tham chiếu| Store
     ExtSecret -->|Đọc mật khẩu| ASM
     ExtSecret -->|Sinh tự động| LocalSecret
     LocalSecret -->|Volume Mount| Pod
-    GK -.->|Kiểm soát chính sách bảo mật| Pod
+    
+    GK -.->|Kiểm soát CPU/RAM & Replicas <= 5| Pod
+    Sigstore -.->|Kiểm tra chữ ký số qua CIP| Pod
+    GHCR -->|Pull Image| Pod
     ArgoCD -->|Đồng bộ hóa GitOps| Minikube Cluster
 ```
 
@@ -63,6 +86,7 @@ graph TD
 | **Phần 3** | **Tối ưu hóa Namespace OPA** | Giới hạn OPA chỉ chạy trên namespace `demo`. Xóa các parameter thừa. | Tránh việc OPA chặn đứng các Pod hệ thống (Prometheus), giải phóng cụm khỏi trạng thái treo. |
 | **Phần 4** | **Tích hợp AWS Secrets & ESO** | Cài đặt ESO, chuẩn hóa cấu trúc file, tạo API Keys cục bộ, khôi phục AWS Secret bị xóa. | Bảo mật mật khẩu ứng dụng bằng cách lưu tập trung trên Cloud và tự động sync về cụm. |
 | **Phần 5** | **Mount Secret & Rollout Canary** | Mount Secret `db-secret-local` vào volume của API Rollout. | Cho phép Pod nhận mật khẩu dạng file tĩnh an toàn, tự động cập nhật mà không cần restart container. |
+| **Phần 6** | **Trivy & Cosign Security** | Tích hợp Trivy quét bảo mật, Cosign ký số Image tại GitHub Actions. Triển khai Sigstore Webhook trên Minikube để xác thực chữ ký. | Bảo mật chuỗi cung ứng phần mềm (Software Supply Chain Security), ngăn chặn malware và CVE nghiêm trọng chạy trên K8s. |
 
 ---
 
@@ -134,9 +158,31 @@ graph TD
 
 ---
 
+### PHẦN 6: BẢO MẬT CHUỖI CUNG ỨNG (TRIVY & COSIGN)
+#### 1. Các chỉnh sửa đã thực hiện:
+* **Tích hợp Trivy vào GitHub Actions**: Cài đặt bước quét lỗ hổng bảo mật `aquasecurity/trivy-action@v0.35.0` để chặn build (exit-code 1) nếu phát hiện thư viện hoặc OS dính lỗ hổng mức độ `HIGH,CRITICAL`.
+* **Tích hợp Cosign ký số Image**: Cài đặt `sigstore/cosign-installer@v3.5.0` và ký số Image vừa build thông qua khóa bí mật `COSIGN_PRIVATE_KEY` được mã hóa an toàn trên GitHub Secrets.
+* **Đồng bộ hóa hạ tầng Sigstore Admission Controller**: 
+  * Tạo tệp ứng dụng ArgoCD `argocd/apps/policy-controller.yaml` để cài đặt Helm Chart `policy-controller`.
+  * Tạo tệp ứng dụng `argocd/apps/policies.yaml` trỏ tới thư mục `policies/` chứa luật xác thực.
+  * Cấu hình tệp chính sách `policies/cluster-image-policy.yaml` nạp khóa Public Key (`cosign.pub`) để kiểm duyệt toàn bộ image thuộc prefix `ghcr.io/hung0codon/*`.
+* **Kích hoạt dán nhãn bảo mật Namespace**: 
+  * Thực thi lệnh dán nhãn kích hoạt xác thực cho namespace demo sau khi image `v0.0.3` đã được ký số thành công:
+    ```bash
+    kubectl label namespace demo policy.sigstore.dev/include=true
+    ```
+
+#### 2. Tại sao cần thực hiện?
+* **Phòng chống lỗ hổng bảo mật bên thứ ba**: Tránh việc deploy các container dính mã độc hoặc lỗi thư viện nghiêm trọng lên production.
+* **Chống giả mạo Container Image (Man-in-the-middle)**: Chặn đứng trường hợp tin tặc tấn công Registry và tráo đổi image sạch bằng mã độc trùng tên/trùng phiên bản. Chỉ những container được ký bằng đúng cặp khóa bảo mật của dự án mới có quyền khởi chạy trên cụm.
+* **Tránh treo cụm hệ thống (Bẫy thiết kế)**: Phải gán nhãn phạm vi cụ thể (`policy.sigstore.dev/include=true`) để tránh Sigstore kiểm tra các pod mặc định của K8s (CoreDNS, kube-proxy...) gây sập cụm. Chỉ gán nhãn sau khi đã có tối thiểu 1 image có chữ ký để tránh sập app Flask API hiện tại.
+
+---
+
 ## 🏁 KẾT QUẢ ĐẠT ĐƯỢC
 Hiện tại hệ thống đã được tối ưu hóa toàn diện và đạt trạng thái lý tưởng:
 * **Hệ thống phân quyền (RBAC)** hoạt động chuẩn xác cho Alice, Bob, Carol.
 * **Bộ lọc bảo mật (OPA Gatekeeper)** hoạt động tốt trên namespace `demo` mà không ảnh hưởng tới hệ thống.
 * **Hệ thống đồng bộ mật khẩu (ESO)** kết nối thành công với AWS Secrets Manager, tự động đồng bộ mật khẩu và cấp phát cho ứng dụng Flask API thông qua volume mount.
-* **Ứng dụng API** đang chạy mượt mà dưới dạng Progressive Delivery (Argo Rollout Canary 10%) không hề có lỗi.
+* **Ứng dụng API** đang chạy mượt mà dưới dạng Progressive Delivery (Argo Rollout Canary 10%) sử dụng phiên bản image **`v0.0.3`** đã được ký số bảo mật.
+* **Sigstore Webhook** bảo vệ namespace `demo` tuyệt đối: Chặn đứng hoàn toàn tất cả các image không có chữ ký số hợp lệ (ví dụ: `nginx:alpine` bị block ngay lập tức) trong khi vẫn cho phép các namespace hệ thống khác chạy bình thường.
